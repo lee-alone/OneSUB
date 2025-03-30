@@ -1,7 +1,9 @@
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QPushButton, QLineEdit, QDialog, QFormLayout, QMessageBox, QApplication
 from PyQt5.QtCore import Qt, pyqtSignal
+#from PyQt5.QtGui import QIcon
 import subscription_manager
 from web_server import WebServer
+import styles
 
 
 class MainWindow(QMainWindow):
@@ -32,19 +34,27 @@ class MainWindow(QMainWindow):
 
         # 按钮布局
         self.button_layout = QHBoxLayout()
-        self.add_button = QPushButton("添加订阅")
+        self.add_button = QPushButton("添加订阅 (+)")
+        self.add_button.setStyleSheet(styles.add_button_style)
+        #self.add_button.setIcon(QIcon("icons/add.png"))
         self.add_button.clicked.connect(self.add_subscription)
         self.button_layout.addWidget(self.add_button)
 
-        self.update_subscription_button = QPushButton("更新订阅")
+        self.update_subscription_button = QPushButton("更新订阅 (↻)")
+        self.update_subscription_button.setStyleSheet(styles.update_subscription_button_style)
+        #self.update_subscription_button.setIcon(QIcon("icons/update.png"))
         self.button_layout.addWidget(self.update_subscription_button)
         self.update_subscription_button.clicked.connect(self.update_subscriptions)
 
-        self.deduplicate_button = QPushButton("去重")
+        self.deduplicate_button = QPushButton("去重 (☰)")
+        self.deduplicate_button.setStyleSheet(styles.deduplicate_button_style)
+        #self.deduplicate_button.setIcon(QIcon("icons/deduplicate.png"))
         self.button_layout.addWidget(self.deduplicate_button)
         self.deduplicate_button.clicked.connect(self.deduplicate)
 
-        self.delete_button = QPushButton("删除订阅")
+        self.delete_button = QPushButton("删除订阅 (✖)")
+        self.delete_button.setStyleSheet(styles.delete_button_style)
+        #self.delete_button.setIcon(QIcon("icons/delete.png"))
         self.delete_button.setEnabled(False)
         self.button_layout.addWidget(self.delete_button)
 
@@ -58,10 +68,14 @@ class MainWindow(QMainWindow):
         self.layout.addLayout(self.port_layout)
 
         self.web_server_layout = QHBoxLayout()
-        self.start_web_server_button = QPushButton("启动 Web 服务器")
+        self.start_web_server_button = QPushButton("启动 Web 服务器 (▶)")
+        self.start_web_server_button.setStyleSheet(styles.start_web_server_button_style)
+        #self.start_web_server_button.setIcon(QIcon("icons/start.png"))
         self.web_server_layout.addWidget(self.start_web_server_button)
 
-        self.stop_web_server_button = QPushButton("停止 Web 服务器")
+        self.stop_web_server_button = QPushButton("停止 Web 服务器 (■)")
+        self.stop_web_server_button.setStyleSheet(styles.stop_web_server_button_style)
+        #self.stop_web_server_button.setIcon(QIcon("icons/stop.png"))
         self.web_server_layout.addWidget(self.stop_web_server_button)
         self.layout.addLayout(self.web_server_layout)
 
@@ -71,6 +85,7 @@ class MainWindow(QMainWindow):
         
         self.status_layout = QHBoxLayout()
         self.status_label = QLabel("就绪")
+        self.status_label.setStyleSheet("color: green")
         self.status_layout.addWidget(self.status_label)
         self.layout.addLayout(self.status_layout)
 
@@ -113,6 +128,7 @@ class MainWindow(QMainWindow):
 
     def update_subscriptions(self):
         self.status_label.setText("正在更新订阅...")
+        self.status_label.setStyleSheet("color: blue")
         QApplication.processEvents()  # 确保UI更新
 
         subscription_manager.update_all_subscriptions(self.subscriptions)
@@ -127,8 +143,10 @@ class MainWindow(QMainWindow):
                 error_text = "\n".join(errors)
                 QMessageBox.warning(self, "解析错误", f"部分订阅解析出现错误：\n{error_text}")
                 self.status_label.setText("订阅更新完成，但存在错误")
+                self.status_label.setStyleSheet("color: orange")
             else:
                 self.status_label.setText("订阅更新完成")
+                self.status_label.setStyleSheet("color: green")
 
     def edit_subscription(self, item):
         row = item.row()
@@ -194,10 +212,12 @@ class MainWindow(QMainWindow):
             success, message = self.web_server.start(port)
             if success:
                 self.status_label.setText(message)
+                self.status_label.setStyleSheet("color: green")
                 self.start_web_server_button.setEnabled(False)
                 self.stop_web_server_button.setEnabled(True)
             else:
                 QMessageBox.warning(self, "错误", message)
+
         except ValueError:
             QMessageBox.warning(self, "错误", "请输入有效的端口号")
 
@@ -205,6 +225,7 @@ class MainWindow(QMainWindow):
         success, message = self.web_server.stop()
         if success:
             self.status_label.setText(message)
+            self.status_label.setStyleSheet("color: green")
             self.start_web_server_button.setEnabled(True)
             self.stop_web_server_button.setEnabled(False)
         else:
