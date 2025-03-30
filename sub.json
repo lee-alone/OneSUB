@@ -1,0 +1,17 @@
+[
+    {
+        "alias": "clash",
+        "url": "https://raw.githubusercontent.com/anaer/Sub/refs/heads/main/clash.yaml",
+        "type": "clash"
+    },
+    {
+        "alias": "nfw",
+        "url": "https://raw.githubusercontent.com/peasoft/NoMoreWalls/master/list.txt",
+        "type": "base64"
+    },
+    {
+        "alias": "alibaba",
+        "url": "https://raw.githubusercontent.com/aiboboxx/v2rayfree/refs/heads/main/v2",
+        "type": "base64"
+    }
+]
