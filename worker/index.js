@@ -250,59 +250,55 @@ function parseVlessLink(link) {
 
 function parseSsLink(link) {
     try {
-        const url = new URL(link);
-        const base64Part = url.pathname.substring(1); // 移除开头的 '/'
-        const userInfo = atob(base64Part.split('@')[0]);
-        const [method, password] = userInfo.split(':');
-        const address = url.hostname;
-        const port = parseInt(url.port, 10);
-
-        if (!address || !port || !method || !password) return null;
-
-        return {
-            protocol: 'ss',
-            address,
-            port,
-            method,
-            password,
-            // SS 链接通常不包含 network, path 等信息，但可以有插件参数
-            plugin: url.searchParams.get('plugin') || '',
-            ps: url.hash ? decodeURIComponent(url.hash.substring(1)) : `ss-${address}:${port}`
-        };
-    } catch (e) {
-         // 尝试另一种 SS 格式: ss://method:password@server:port#remark
-         try {
-            const urlNoScheme = link.substring('ss://'.length);
-            const hashIndex = urlNoScheme.lastIndexOf('#');
-            const remark = hashIndex !== -1 ? decodeURIComponent(urlNoScheme.substring(hashIndex + 1)) : '';
-            const corePart = hashIndex !== -1 ? urlNoScheme.substring(0, hashIndex) : urlNoScheme;
-
-            const atIndex = corePart.lastIndexOf('@');
-            if (atIndex === -1) throw new Error('Invalid SS format (no @)');
-
-            const userInfo = corePart.substring(0, atIndex);
-            const serverInfo = corePart.substring(atIndex + 1);
-
-            const [method, password] = userInfo.split(':');
-            const [address, portStr] = serverInfo.split(':');
-            const port = parseInt(portStr, 10);
-
-            if (!address || !port || !method || !password) return null;
-
+        // 移除 'ss://' 前缀
+        const ssContent = link.substring('ss://'.length);
+        
+        // 分离备注信息
+        const [mainPart, remark = ''] = ssContent.split('#');
+        
+        // 检查是否包含 '@' 来确定格式类型
+        if (mainPart.includes('@')) {
+            // 格式1: base64(method:password)@server:port
+            const [encoded, serverPart] = mainPart.split('@');
+            const [server, port] = serverPart.split(':');
+            
+            // 确保编码的部分是合法的 Base64
+            const decoded = atob(encoded.replace(/-/g, '+').replace(/_/g, '/'));
+            const [method, password] = decoded.split(':');
+            
+            if (!server || !port || !method || !password) return null;
+            
             return {
                 protocol: 'ss',
-                address,
-                port,
-                method,
-                password,
-                plugin: '', // 这种格式通常不带 plugin 参数
-                ps: remark || `ss-${address}:${port}`
+                address: server,
+                port: parseInt(port, 10),
+                method: method,
+                password: password,
+                plugin: '',
+                ps: decodeURIComponent(remark) || `ss-${server}:${port}`
             };
-
-         } catch (e2) {
-            console.error(`Error parsing SS link (both formats): ${link}`, e, e2);
-            return null;
-         }
+        } else {
+            // 格式2: base64(method:password@server:port)
+            const decoded = atob(mainPart.replace(/-/g, '+').replace(/_/g, '/'));
+            const [userInfo, serverPart] = decoded.split('@');
+            const [method, password] = userInfo.split(':');
+            const [server, port] = serverPart.split(':');
+            
+            if (!server || !port || !method || !password) return null;
+            
+            return {
+                protocol: 'ss',
+                address: server,
+                port: parseInt(port, 10),
+                method: method,
+                password: password,
+                plugin: '',
+                ps: decodeURIComponent(remark) || `ss-${server}:${port}`
+            };
+        }
+    } catch (e) {
+        console.error(`Error parsing SS link: ${link}`, e);
+        return null;
     }
 }
 
